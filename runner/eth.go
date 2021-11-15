@@ -3,6 +3,11 @@ package runner
 import (
 	"context"
 	"crypto/ecdsa"
+	"log"
+	"math/big"
+	"strings"
+	"time"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -13,10 +18,6 @@ import (
 	"github.com/fitzix/sniper-bot/consts"
 	"github.com/fitzix/sniper-bot/contract/uniswap"
 	"github.com/spf13/viper"
-	"log"
-	"math/big"
-	"strings"
-	"time"
 )
 
 type ethRunner struct {
@@ -64,8 +65,10 @@ func (e *ethRunner) SniperDxsale(chain string) {
 		}
 		interval := viper.GetInt64("sniperInterval")
 		log.Printf("contract not active, retry in %d ms", interval)
-		time.Sleep(time.Duration(interval) * time.Millisecond)
-		e.SniperDxsale(chain)
+		time.AfterFunc(time.Duration(interval)*time.Millisecond, func() {
+			e.SniperDxsale(chain)
+		})
+		return
 	}
 
 	if viper.GetUint64("gasLimit") < gas {
