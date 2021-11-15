@@ -156,25 +156,23 @@ func (e *ethRunner) SniperUniCake(chain string) {
 	if err != nil {
 		panic(err)
 	}
+	interval := time.Duration(viper.GetInt64("sniperInterval"))
 	if pairAddress == consts.ZeroAddress {
-		interval := viper.GetInt64("sniperInterval")
 		log.Printf("pair not create, retry in %d ms", interval)
-		time.AfterFunc(time.Duration(interval)*time.Millisecond, func() {
+		time.AfterFunc(interval*time.Millisecond, func() {
 			e.SniperUniCake(chain)
 		})
 		return
 	}
 
-	println(pairAddress.Hex())
-
-	token, err := uniswap.NewUniswapV2(wrapperTokenAddress, e.getClient(chain))
+	ethToken, err := uniswap.NewUniswapV2(wrapperTokenAddress, e.getClient(chain))
 	if err != nil {
 		panic(err)
 	}
 
-	minPoolLiquidityAdded := big.NewInt(viper.GetInt64("minPoolLiquidityAdded"))
+	minPoolLiquidityAdded, _ := big.NewFloat(viper.GetFloat64("minPoolLiquidityAdded") * params.Ether).Int(nil)
 	for {
-		balance, err := token.BalanceOf(nil, pairAddress)
+		balance, err := ethToken.BalanceOf(nil, pairAddress)
 		if err != nil {
 			panic(err)
 		}
@@ -184,7 +182,7 @@ func (e *ethRunner) SniperUniCake(chain string) {
 			break
 		}
 
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(interval * time.Millisecond)
 	}
 
 	////
