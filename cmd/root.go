@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"os"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -25,6 +27,7 @@ func Execute() {
 }
 
 func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	viper.SetConfigFile("config.yml")
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)

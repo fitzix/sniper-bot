@@ -32,12 +32,12 @@ type ethRunner struct {
 func NewEthRunner() *ethRunner {
 	uniAbi, err := abi.JSON(strings.NewReader(uniswap.UniswapV2ABI))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	privateKey, err := crypto.HexToECDSA(viper.GetString("privateKey"))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	publicKeyECDSA, ok := privateKey.Public().(*ecdsa.PublicKey)
@@ -60,7 +60,7 @@ func (e *ethRunner) SniperDxsale(chain string) {
 	value, _ := big.NewFloat(viper.GetFloat64("buyingBnbOrEthAmount") * params.Ether).Int(nil)
 	estimateTransferGasData, err := e.uniAbi.Pack("transfer", dxsaleContractAddress, value)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	ctx := context.Background()
@@ -72,7 +72,7 @@ func (e *ethRunner) SniperDxsale(chain string) {
 
 	if err != nil {
 		if err.Error() != "execution reverted" {
-			panic(err)
+			log.Fatal(err)
 		}
 		interval := viper.GetInt64("sniperInterval")
 		log.Printf("contract not active, retry in %d ms", interval)
@@ -96,7 +96,7 @@ func (e *ethRunner) transfer(ctx context.Context, chain string, toAddress common
 
 	nonce, err := e.getClient(chain).PendingNonceAt(ctx, e.fromAddress)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	println(nonce)
@@ -110,12 +110,12 @@ func (e *ethRunner) transfer(ctx context.Context, chain string, toAddress common
 	})
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = e.getClient(chain).SendTransaction(ctx, tx)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	log.Printf("Transaction has been sent, tx hash: %s", tx.Hash().Hex())
@@ -138,23 +138,23 @@ func (e *ethRunner) getClient(chain string) *ethclient.Client {
 
 	client, err := ethclient.Dial(rpcAddress)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	e.ethClientMap[chain] = client
 	return client
 }
 
 func (e *ethRunner) SniperUniCake(chain string) {
-	factory, err := uniswap.NewUniswapV2(common.HexToAddress(getFactoryAddressByChain(chain)), e.getClient(chain))
+	factory, err := uniswap.NewUniswapV2(consts.UniSwapFactoryContractMap[chain], e.getClient(chain))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	wrapperTokenAddress := getWrapperTokenByChain(chain)
+	wrapperTokenAddress := consts.UniSwapWrapperTokenContractMap[chain]
 	targetTokenAddress := common.HexToAddress(viper.GetString("targetContract"))
 	pairAddress, err := factory.GetPair(nil, wrapperTokenAddress, targetTokenAddress)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	interval := time.Duration(viper.GetInt64("sniperInterval"))
 	if pairAddress == consts.ZeroAddress {
@@ -167,18 +167,18 @@ func (e *ethRunner) SniperUniCake(chain string) {
 
 	ethToken, err := uniswap.NewUniswapV2(wrapperTokenAddress, e.getClient(chain))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	minPoolLiquidityAdded, _ := big.NewFloat(viper.GetFloat64("minPoolLiquidityAdded") * params.Ether).Int(nil)
 	for {
 		balance, err := ethToken.BalanceOf(nil, pairAddress)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		if balance.Cmp(minPoolLiquidityAdded) >= 1 {
-			log.Printf("pool liquidity %s", utils.WeiToEtherFloatByDecimals(18, balance).String())
+			log.Printf("pool liquidity %s, start to buy ------", utils.WeiToEtherFloatByDecimals(18, balance).String())
 			break
 		}
 
@@ -188,22 +188,22 @@ func (e *ethRunner) SniperUniCake(chain string) {
 	////
 	path := []common.Address{wrapperTokenAddress, targetTokenAddress}
 	amountIn, _ := big.NewFloat(viper.GetFloat64("buyingBnbOrEthAmount") * params.Ether).Int(nil)
-	router, err := uniswap.NewUniswapV2(getRouterAddressByChain(chain), e.getClient(chain))
+	router, err := uniswap.NewUniswapV2(consts.UniSwapRouterContractMap[chain], e.getClient(chain))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	amountOutMin := big.NewInt(0)
 	if slippage := viper.GetInt64("slippage"); slippage != 0 && slippage < 100 {
 		amounts, err := router.GetAmountsOut(nil, amountIn, path)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		amountOutMin = new(big.Int).Div(new(big.Int).Mul(amounts[0], big.NewInt(100-slippage)), big.NewInt(100))
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(e.privateKey, big.NewInt(consts.ChainIdMap[chain]))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	auth.Value = amountIn
 	auth.GasLimit = viper.GetUint64("gasLimit")
@@ -211,41 +211,8 @@ func (e *ethRunner) SniperUniCake(chain string) {
 
 	tx, err := router.SwapExactETHForTokens(auth, amountOutMin, path, e.fromAddress, big.NewInt(time.Now().Add(2*time.Minute).Unix()))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	log.Printf("Transaction has been sent, tx hash: %s", tx.Hash().Hex())
-}
-
-func getFactoryAddressByChain(chain string) string {
-	switch chain {
-	case consts.ChainTypeEth:
-		return consts.UniSwapV2FactoryAddress
-	case consts.ChainTypeBsc:
-		return consts.PancakeFactoryAddress
-	}
-	return ""
-}
-
-func getRouterAddressByChain(chain string) common.Address {
-	var address string
-	switch chain {
-	case consts.ChainTypeEth:
-		address = consts.UniSwapV2RouterAddress
-	case consts.ChainTypeBsc:
-		address = consts.PancakeRouterAddress
-	}
-	return common.HexToAddress(address)
-}
-
-func getWrapperTokenByChain(chain string) common.Address {
-	var address string
-	switch chain {
-	case consts.ChainTypeEth:
-		address = consts.WETHAddress
-	case consts.ChainTypeBsc:
-		address = consts.WBNBAddress
-	}
-
-	return common.HexToAddress(address)
 }

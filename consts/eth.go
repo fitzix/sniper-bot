@@ -29,4 +29,18 @@ var (
 		ChainTypeEth: 1,
 		ChainTypeBsc: 56,
 	}
+	UniSwapWrapperTokenContractMap = map[string]common.Address{
+		ChainTypeEth: common.HexToAddress(WETHAddress),
+		ChainTypeBsc: common.HexToAddress(WBNBAddress),
+	}
+
+	UniSwapFactoryContractMap = map[string]common.Address{
+		ChainTypeEth: common.HexToAddress(UniSwapV2FactoryAddress),
+		ChainTypeBsc: common.HexToAddress(PancakeFactoryAddress),
+	}
+
+	UniSwapRouterContractMap = map[string]common.Address{
+		ChainTypeEth: common.HexToAddress(UniSwapV2RouterAddress),
+		ChainTypeBsc: common.HexToAddress(PancakeRouterAddress),
+	}
 )
