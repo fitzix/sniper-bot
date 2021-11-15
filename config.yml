@@ -1,0 +1,10 @@
+gasLimit: 200000
+gasPrice: 10
+# eip1559 gas tip, bsc not support
+gasTip: 10
+buyingBnbOrEthAmount: 0.3
+privateKey: your privateKey
+# sniper interval when contract not active
+sniperInterval: 1000
+dxsale:
+  contract: 0x48aF49fDF4620F979AC1BEF3c7F3B0759e14e615
