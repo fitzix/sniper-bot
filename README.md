@@ -6,6 +6,8 @@
 
 ## usage
 
+- download from [releases page](https://github.com/fitzix/sniper-bot/releases)
+- run sniper
 - fill in the configuration file config.yml
 - run cmd
     - dxsale `go run main.go dxsale`

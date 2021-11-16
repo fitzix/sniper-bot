@@ -9,7 +9,7 @@ import (
 // cakeCmd represents the unicake command
 var cakeCmd = &cobra.Command{
 	Use:   "cake",
-	Short: "A brief description of your command",
+	Short: "sniper on pancake",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		runner.NewEthRunner().SniperUniCake(consts.ChainTypeBsc)
