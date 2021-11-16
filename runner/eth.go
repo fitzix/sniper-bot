@@ -198,7 +198,7 @@ func (e *ethRunner) SniperUniCake(chain string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		amountOutMin = new(big.Int).Div(new(big.Int).Mul(amounts[0], big.NewInt(100-slippage)), big.NewInt(100))
+		amountOutMin = new(big.Int).Div(new(big.Int).Mul(amounts[1], big.NewInt(100-slippage)), big.NewInt(100))
 	}
 
 	auth, err := bind.NewKeyedTransactorWithChainID(e.privateKey, big.NewInt(consts.ChainIdMap[chain]))
