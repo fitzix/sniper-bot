@@ -30,6 +30,11 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	viper.SetConfigFile("config.yml")
 	if err := viper.ReadInConfig(); err != nil {
+		if os.IsNotExist(err) {
+			if args := os.Args; len(args) >= 2 && args[1] == "init" {
+				return
+			}
+		}
 		log.Fatal("init config before sniper")
 	}
 }
