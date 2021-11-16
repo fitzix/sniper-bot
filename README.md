@@ -7,9 +7,9 @@
 ## usage
 
 - download from [releases page](https://github.com/fitzix/sniper-bot/releases)
-- run sniper
-- fill in the configuration file config.yml
+- run `sniper-bot init` generate config file
+- fill the config.yml
 - run cmd
-    - dxsale `go run main.go dxsale`
-    - pancake `go run main.go cake`
-    - uniswap-v2 `go run main.go uni`
+    - dxsale `sniper-bot dxsale`
+    - pancake `sniper-bot cake`
+    - uniswap-v2 `sniper-bot uni`
